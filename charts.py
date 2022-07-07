@@ -40,7 +40,7 @@ class Charts:
     @staticmethod
     def create_connection():
         """Creates a connection for database operations and returns the cursor."""
-        con = sqlite3.connect('database.db')
+        con = sqlite3.connect(Charts.config['database']['dbname'])
         con.row_factory = sqlite3.Row
         return con
 
