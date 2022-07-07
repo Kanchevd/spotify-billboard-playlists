@@ -1,41 +1,19 @@
 """
 Scrapes all Billboard charts present in the database and adds their entries to the relevant tables.
 """
-import configparser
 import sqlite3
 
 import requests
 from lxml import html
+
+from load_config import load_config
 
 
 class Charts:
     """
     Manages Billboard charts and their entries.
     """
-    config = None
-    __instance = None
-
-    def __init__(self):
-        """ Virtually private constructor. """
-        if Charts.__instance is None:
-            raise Exception("This class is a singleton!")
-
-        Charts.__instance = self
-        Charts.config = Charts.load_config()
-
-    @staticmethod
-    def get_instance():
-        """ Static access method. """
-        if Charts.__instance is None:
-            Charts()
-        return Charts.__instance
-
-    @staticmethod
-    def load_config():
-        """Initializes configuration file."""
-        config = configparser.ConfigParser()
-        config.read('config.ini')
-        return config
+    config = load_config()
 
     @staticmethod
     def create_connection():

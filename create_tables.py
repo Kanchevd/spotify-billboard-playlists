@@ -10,7 +10,7 @@ def create_tables():
     Initializes all tables and inserts base data.
     """
     config = configparser.ConfigParser()
-    config.read('config.ini')
+    config.read('../config_files/spotify-billboard-charts-config.ini')
 
     file_name = config['database']['init_file']
     database_name = config['database']['dbname']
