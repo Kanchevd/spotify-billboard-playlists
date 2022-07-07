@@ -2,36 +2,33 @@ import sqlite3
 
 import tekore
 
-import config
+from load_config import load_config
 
 
 class SpotifyClient:
-    def __init__(self, auth=True):
-        self.app_token = tekore.request_client_token(config.client_id, config.client_secret)
+    """Represents a connection to a specific spotify account and contains the associated operations."""
+    app_token = None
+    spotify = None
+    config = load_config()
+    client_id = config['client']['client_id']
+    client_secret = config['client']['client_secret']
+    redirect_uri = 'https://example.com/callback'
+
+    def __init__(self):
+        self.app_token = tekore.request_client_token(self.client_id, self.client_secret)
         self.spotify = tekore.Spotify(self.app_token)
-        if auth:
-            redirect_uri = 'https://example.com/callback'
-            user_token = tekore.prompt_for_user_token(
-                config.client_id,
-                config.client_secret,
-                redirect_uri,
-                scope=tekore.scope.every)
-            self.spotify.token = user_token
+
+        user_token = tekore.prompt_for_user_token(
+            self.client_id,
+            self.client_secret,
+            self.redirect_uri,
+            scope=tekore.scope.every)
+        self.spotify.token = user_token
 
     def update_playlist_from_song_list(self, playlist_id, songs):
         uris = self.songs_to_uris(songs)
         self.spotify.playlist_clear(playlist_id)
         self.add_songs_to_playlist(uris=uris, playlist_id=playlist_id)
-
-    def extend_archive_playlist(self, playlist_id, archive_playlist_id):
-        current_tracks_uris = self.get_playlist_songs(playlist_id)
-        archive_uris = self.get_playlist_songs(archive_playlist_id)
-
-        uris_to_archive = []
-        for uri in current_tracks_uris:
-            if uri not in archive_uris:
-                uris_to_archive.append(uri)
-        self.add_songs_to_playlist(uris=uris_to_archive, playlist_id=archive_playlist_id)
 
     def get_playlist_songs(self, playlist_id):
         all_tracks = []
@@ -40,7 +37,8 @@ class SpotifyClient:
         all_tracks.extend(tracks)
         while len(tracks) == 100:
             offset += 100
-            tracks = [item['track']['uri'] for item in self.spotify.playlist_items(playlist_id, as_tracks=True, offset=offset)['items']]
+            tracks = [item['track']['uri'] for item in
+                      self.spotify.playlist_items(playlist_id, as_tracks=True, offset=offset)['items']]
             if tracks:
                 all_tracks.extend(tracks)
         return all_tracks
@@ -103,16 +101,24 @@ class SpotifyClient:
             if current_week == chart['last_updated']:
                 print(f'{chart["name"]} is up to date.')
                 continue
-            self.update_playlist_from_song_list(playlist_id=chart['playlist_id'], songs=get_billboard_chart(chart['link']))
-            self.spotify.playlist_change_details(playlist_id=chart['playlist_id'], description=f"The current {chart['name']} chart, updated automatically. "
-                                                                                               f"Current Week: {current_week}. Created by: Daniel Kanchev.")
-            self.extend_archive_playlist(playlist_id=chart['playlist_id'], archive_playlist_id=chart['archive_playlist_id'])
-            self.spotify.playlist_change_details(playlist_id=chart['archive_playlist_id'], description=f"All songs that have charted on the {chart['name']}"
-                                                                                                       f"in 2022 updated automatically. "
-                                                                                                       f"Current Week: {current_week}. Created by: Daniel Kanchev.")
+            self.update_playlist_from_song_list(playlist_id=chart['playlist_id'],
+                                                songs=get_billboard_chart(chart['link']))
+            self.spotify.playlist_change_details(playlist_id=chart['playlist_id'],
+                                                 description=f"The current {chart['name']} chart, updated automatically. "
+                                                             f"Current Week: {current_week}. Created by: Daniel Kanchev.")
+            self.extend_archive_playlist(playlist_id=chart['playlist_id'],
+                                         archive_playlist_id=chart['archive_playlist_id'])
+            self.spotify.playlist_change_details(playlist_id=chart['archive_playlist_id'],
+                                                 description=f"All songs that have charted on the {chart['name']}"
+                                                             f"in 2022 updated automatically. "
+                                                             f"Current Week: {current_week}. Created by: Daniel Kanchev.")
             con = sqlite3.connect('database.db')
             cur = con.cursor()
             cur.execute("UPDATE charts SET last_updated = ? WHERE id = ?", (current_week, chart['id']))
             con.commit()
             con.close()
             print(f'{chart["name"]} is updated.')
+
+
+if __name__ == "__main__":
+    client = SpotifyClient()
