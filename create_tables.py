@@ -11,7 +11,6 @@ def create_tables():
     """
     config = configparser.ConfigParser()
     config.read('config.ini')
-    config.sections()
 
     file_name = config['database']['init_file']
     database_name = config['database']['dbname']

@@ -1,6 +1,7 @@
 """
 Scrapes all Billboard charts present in the database and adds their entries to the relevant tables.
 """
+import configparser
 import sqlite3
 
 import requests
@@ -11,42 +12,74 @@ class Charts:
     """
     Manages Billboard charts and their entries.
     """
+    config = None
+    __instance = None
+
+    def __init__(self):
+        """ Virtually private constructor. """
+        if Charts.__instance is None:
+            raise Exception("This class is a singleton!")
+
+        Charts.__instance = self
+        Charts.config = Charts.load_config()
 
     @staticmethod
-    def get_database_cursor():
-        """Creates a cursor for database operations."""
+    def get_instance():
+        """ Static access method. """
+        if Charts.__instance is None:
+            Charts()
+        return Charts.__instance
+
+    @staticmethod
+    def load_config():
+        """Initializes configuration file."""
+        config = configparser.ConfigParser()
+        config.read('config.ini')
+        return config
+
+    @staticmethod
+    def create_connection():
+        """Creates a connection for database operations and returns the cursor."""
         con = sqlite3.connect('database.db')
         con.row_factory = sqlite3.Row
-        return con.cursor()
+        return con
 
     @staticmethod
     def get_chart_name_from_link(link):
         """Gets the name of a Billboard chart from the URL of the chart."""
-        cur = Charts.get_database_cursor()
+        con = Charts.create_connection()
+        cur = con.cursor()
+
         cur.execute("SELECT name FROM charts WHERE link=?", (link,))
-        return cur.fetchone()['name']
+        chart_name = cur.fetchone()['name']
+
+        con.close()
+
+        return chart_name
+
+    @staticmethod
+    def extract_html_from_link(link, xpath):
+        """Given a URL and xpath, extracts HTML from the URL using the xpath."""
+        page = requests.get(link)
+        tree = html.fromstring(page.text)
+        return tree.xpath(xpath)
 
     @staticmethod
     def get_current_chart_week(link):
         """Gets the current week of the chart."""
-        page = requests.get(link)
-        tree = html.fromstring(page.text)
-        current_week = tree.xpath("//p[contains(.,'Week of ')]/text()")[0][8:]
-        return current_week
+        return Charts.extract_html_from_link(link, "//p[contains(.,'Week of ')]/text()")[0][8:]
 
     @staticmethod
     def get_billboard_chart(link):
         """Generates all new Billboard entries for a given chart and adds them to a database."""
-        page = requests.get(link)
-        tree = html.fromstring(page.text)
-        song_elements = tree.xpath("//li[contains(@class, 'o-chart-results-list__item')][h3]")
-
-        songs = []
-        position = 1
+        song_elements = Charts.extract_html_from_link(link, "//li[contains(@class, 'o-chart-results-list__item')][h3]")
         week = Charts.get_current_chart_week(link)
         chart_name = Charts.get_chart_name_from_link(link)
 
-        bad_strings = [' Featuring ', ' X ', ' & ', ' And ', ' x ', ' / ']
+        songs = []
+        position = 1
+        bad_strings = ['Featuring', 'X', '&', 'And', 'x', '/']
+        bad_strings = [f' {x} ' for x in bad_strings]
 
         for element in song_elements:
             artist = element.xpath('./span/text()')[0].strip()
@@ -62,7 +95,7 @@ class Charts:
             songs.append({
                 'name': element.xpath('./h3/text()')[0].strip(),
                 'full_artist': artist,
-                'short_artist': short_artist or '',
+                'short_artist': short_artist,
                 'position': position,
                 'week': week,
                 'chart': chart_name
@@ -74,11 +107,13 @@ class Charts:
     @staticmethod
     def get_all_charts():
         """Executes an update for all charts in the database."""
-        cur = Charts.get_database_cursor()
+        con = Charts.create_connection()
+        cur = con.cursor()
+
         cur.execute("SELECT link FROM charts")
         chart_list = [x['link'] for x in cur.fetchall()]
-        for chart in chart_list:
-            print(Charts.get_billboard_chart(chart))
+        for chart_link in chart_list:
+            print(Charts.get_billboard_chart(chart_link))
 
 
 if __name__ == "__main__":
