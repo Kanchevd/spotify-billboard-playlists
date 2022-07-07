@@ -1,32 +1,8 @@
-import tekore
-import config
 import sqlite3
-import requests
-from lxml import html
 
+import tekore
 
-def get_billboard_chart(link):
-    page = requests.get(link)
-    tree = html.fromstring(page.text)
-    song_elements = tree.xpath("//li[contains(@class, 'o-chart-results-list__item')][h3]")
-    songs = []
-    stuff_to_remove = ['Featuring', 'X', '&', 'And', 'x', '/']
-    for element in song_elements:
-        artist = element.xpath('./span/text()')[0].strip()
-        for string in stuff_to_remove:
-            artist = artist.split(f' {string} ')[0]
-        songs.append({
-            'name': element.xpath('./h3/text()')[0].strip(),
-            'artist': artist
-        })
-    return songs
-
-
-def current_chart_week(link):
-    page = requests.get(link)
-    tree = html.fromstring(page.text)
-    current_week = tree.xpath("//p[contains(.,'Week of ')]/text()")[0][8:]
-    return current_week
+import config
 
 
 class SpotifyClient:
@@ -123,7 +99,7 @@ class SpotifyClient:
         charts = cur.fetchall()
         con.close()
         for chart in charts:
-            current_week = current_chart_week(link=chart['link'])
+            current_week = get_current_chart_week(link=chart['link'])
             if current_week == chart['last_updated']:
                 print(f'{chart["name"]} is up to date.')
                 continue
@@ -140,8 +116,3 @@ class SpotifyClient:
             con.commit()
             con.close()
             print(f'{chart["name"]} is updated.')
-
-
-if __name__ == '__main__':
-    client = SpotifyClient()
-    client.update_current_charts()
