@@ -1,3 +1,4 @@
-lxml==4.7.1
-requests==2.27.1
-tekore==4.2.0
+config==0.5.1
+lxml==4.9.1
+requests==2.28.1
+tekore==4.4.0
