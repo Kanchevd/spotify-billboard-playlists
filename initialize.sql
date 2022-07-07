@@ -1,15 +1,24 @@
 CREATE TABLE IF NOT EXISTS songs(
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
+    full_artist TEXT NOT NULL,
+    short_artist TEXT NOT NULL,
     uri TEXT NOT NULL
     );
 
 CREATE TABLE IF NOT EXISTS charts(
-    id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL,
+    name TEXT PRIMARY KEY,
     link TEXT NOT NULL,
     playlist_id TEXT,
     last_week_updated TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS chart_entries(
+    song_id TEXT NOT NULL,
+    chart_id TEXT NOT NULL,
+    week TEXT NOT NULL,
+    position INTEGER NOT NULL,
+    PRIMARY KEY(song_id, chart_id, week,)
 );
 
 INSERT INTO charts(name, link, playlist_id, last_week_updated) VALUES
