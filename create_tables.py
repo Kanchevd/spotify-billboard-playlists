@@ -1,18 +1,30 @@
+"""
+Initializes all tables and inserts base data.
+"""
+import configparser
 import sqlite3
 
 
-# songs  - id INTEGER PRIMARY KEY, name TEXT, uri TEXT
-# charts - id INTEGER PRIMARY KEY, name TEXT, link TEXT, desc TEXT, playlist_id TEXT, archive_name TEXT, archive desc TEXT, archive_playlist_id TEXT
-# songs_in_charts = song_id, chart_id
 def create_tables():
-    con = sqlite3.connect('database.db')
-    cur = con.cursor()
-    cur.execute("CREATE TABLE IF NOT EXISTS songs(id INTEGER PRIMARY KEY, name TEXT NOT NULL, uri TEXT NOT NULL, last_week_updated:)")
-    cur.execute("CREATE TABLE IF NOT EXISTS charts(id INTEGER PRIMARY KEY, name TEXT NOT NULL, link TEXT NOT NULL, playlist_id TEXT, "
-                "archive_playlist_id TEXT)")
-    con.commit()
-    con.close()
+    """
+    Initializes all tables and inserts base data.
+    """
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    config.sections()
+
+    file_name = config['database']['init_file']
+    database_name = config['database']['dbname']
+
+    with open(file_name, 'r', encoding='utf-8') as sql_file:
+        sql_script = sql_file.read()
+
+    db = sqlite3.connect(database_name)
+    cursor = db.cursor()
+    cursor.executescript(sql_script)
+    db.commit()
+    db.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     create_tables()
