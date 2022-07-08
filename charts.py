@@ -6,7 +6,7 @@ import re
 import requests
 from lxml import html
 
-from db_operations import create_connection
+from create_db_connection import create_connection
 from load_config import load_config
 
 
@@ -100,62 +100,6 @@ class Charts:
             songs.extend(Charts.get_billboard_chart(chart_link))
 
         return songs
-
-    @staticmethod
-    def write_to_db(songs):
-        for song in songs:
-            print("Writing song:", song['name'])
-            Charts.write_artists_to_db(song['artists'])
-            song = Charts.write_song_to_db(song)
-            Charts.write_chart_entry_to_db(song)
-
-    @staticmethod
-    def write_artists_to_db(artists):
-        con = create_connection()
-        cur = con.cursor()
-
-        new_artists = []
-
-        for artist in artists:
-            exists = cur.execute("SELECT name FROM artists WHERE name = ?", (artist,)).fetchone()
-            if not exists:
-                new_artists.append(artist)
-
-        for artist in new_artists:
-            cur.execute("INSERT INTO artists(name) VALUES(?)", (artist,))
-
-        con.commit()
-        con.close()
-
-    @staticmethod
-    def write_song_to_db(song):
-        con = create_connection()
-        cur = con.cursor()
-        exists = cur.execute("SELECT id FROM songs WHERE uri = ?", (song['uri'],)).fetchone()
-        if exists:
-            song['id'] = exists['id']
-            return song
-
-        cur.execute("INSERT INTO songs(name, uri) VALUES(?, ?)", (song['name'], song['uri']))
-        song['id'] = cur.lastrowid
-        for artist in song['artists']:
-            cur.execute("INSERT INTO song_artists(song_id, artist) VALUES(?, ?)", (song['id'], artist))
-
-        con.commit()
-        con.close()
-
-        return song
-
-    @staticmethod
-    def write_chart_entry_to_db(song):
-        con = create_connection()
-        cur = con.cursor()
-        print(song['id'])
-        cur.execute("INSERT OR IGNORE INTO chart_entries(song_id, chart, week, position) VALUES(?, ?, ?, ?)",
-                    (song['id'], song['chart'], song['week'], song['position']))
-
-        con.commit()
-        con.close()
 
     @staticmethod
     def update_needed():

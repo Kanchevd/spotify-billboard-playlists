@@ -3,7 +3,7 @@
 import tekore
 
 from charts import Charts
-from db_operations import create_connection
+from create_db_connection import create_connection
 from load_config import load_config
 
 
@@ -83,7 +83,6 @@ class SpotifyClient:
         return playlist_id
 
     def update_chart(self, chart, current_week):
-
         con = create_connection()
         cur = con.cursor()
         songs = cur.execute("SELECT song_id FROM chart_entries WHERE chart = ? AND week = ?"
@@ -116,6 +115,10 @@ class SpotifyClient:
 
         return f"No track found for search term:{search_term}"
 
+    def find_artist_uri(self, artist):
+        found_artist = self.spotify.search(artist, types=('artist',))[0]
+        return found_artist.items[0].uri
+
     def update_current_charts(self):
         con = create_connection()
         cur = con.cursor()
@@ -142,3 +145,4 @@ class SpotifyClient:
 
 if __name__ == "__main__":
     client = SpotifyClient()
+    client.find_artist_url("Arcti")
