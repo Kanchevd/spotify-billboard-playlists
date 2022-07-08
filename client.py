@@ -65,9 +65,7 @@ class SpotifyClient:
     def update_access_token(access_token):
         con = create_connection()
         cur = con.cursor()
-        print(access_token)
-        print(type(access_token))
-        cur.execute("UPDATE properties SET val = ? WHERE property = access_token",
+        cur.execute("UPDATE properties SET val = ? WHERE property = 'access_token'",
                     (access_token,))
         con.commit()
         con.close()
@@ -115,9 +113,8 @@ class SpotifyClient:
 
         return f"No track found for search term:{search_term}"
 
-    def find_artist_uri(self, artist):
-        found_artist = self.spotify.search(artist, types=('artist',))[0]
-        return found_artist.items[0].uri
+    def find_artist(self, artist) -> tekore.model.FullArtist:
+        return self.spotify.search(artist, types=('artist',))[0].items[0]
 
     def update_current_charts(self):
         con = create_connection()
@@ -145,4 +142,3 @@ class SpotifyClient:
 
 if __name__ == "__main__":
     client = SpotifyClient()
-    client.find_artist_url("Arcti")

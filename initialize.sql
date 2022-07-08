@@ -3,9 +3,23 @@ CREATE TABLE IF NOT EXISTS properties(
     val TEXT
     );
 
+CREATE TABLE IF NOT EXISTS genres(
+    name TEXT PRIMARY KEY
+    );
+
 CREATE TABLE IF NOT EXISTS artists(
     name TEXT PRIMARY KEY,
-    uri TEXT
+    uri TEXT,
+    popularity,
+    followers
+    );
+
+CREATE TABLE IF NOT EXISTS artist_genres(
+    artist TEXT,
+    genre TEXT,
+    PRIMARY KEY(artist, genre),
+    FOREIGN KEY(artist) REFERENCES artists(name),
+    FOREIGN KEY(genre) REFERENCES genres(name)
     );
 
 CREATE TABLE IF NOT EXISTS songs(

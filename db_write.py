@@ -21,8 +21,14 @@ def write_artists_to_db(artists, client: SpotifyClient):
             new_artists.append(artist)
 
     for artist in new_artists:
-        uri = client.find_artist_uri(artist)
-        cur.execute("INSERT INTO artists(name, uri) VALUES(?, ?)", (artist, uri))
+        full_artist = client.find_artist(artist)
+
+        cur.execute("INSERT OR REPLACE INTO artists(name, uri, popularity, followers) VALUES(?, ?, ?, ?)",
+                    (full_artist.name, full_artist.uri, full_artist.popularity, full_artist.followers.total))
+
+        for genre in full_artist.genres:
+            cur.execute("INSERT OR IGNORE INTO genres(name) VALUES (?)", (genre,))
+            cur.execute("INSERT OR IGNORE INTO artist_genres(artist, genre) VALUES (?, ?)", (full_artist.name, genre))
 
     con.commit()
     con.close()
@@ -50,7 +56,6 @@ def write_song_to_db(song):
 def write_chart_entry_to_db(song):
     con = create_connection()
     cur = con.cursor()
-    print(song['id'])
     cur.execute("INSERT OR IGNORE INTO chart_entries(song_id, chart, week, position) VALUES(?, ?, ?, ?)",
                 (song['id'], song['chart'], song['week'], song['position']))
 
