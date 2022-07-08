@@ -1,16 +1,16 @@
 """
 Initializes all tables and inserts base data.
 """
-import configparser
 import sqlite3
+
+from load_config import load_config
 
 
 def create_tables():
     """
     Initializes all tables and inserts base data.
     """
-    config = configparser.ConfigParser()
-    config.read('../config_files/spotify-billboard-charts-config.ini')
+    config = load_config()
 
     file_name = config['database']['init_file']
     database_name = config['database']['dbname']
