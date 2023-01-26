@@ -1,9 +1,10 @@
 import requests
-from lxml import html
 import spotipy
-from spotipy.oauth2 import SpotifyOAuth
-import config
+from lxml import html
 from requests.exceptions import ReadTimeout
+from spotipy.oauth2 import SpotifyOAuth
+
+import config
 
 chartList = [{"link": "https://www.billboard.com/charts/hot-100/", "playlistID": "0q8fbu1LEBfJB58LawLyLc", "name": "Hot 100"}, {
     "link": "https://www.billboard.com/charts/billboard-global-200/", "playlistID": "2jrKsIhIQMwaoZPjs25hpD", "name": "Global 200"}]
