@@ -1,3 +1,3 @@
 lxml==4.7.1
 requests==2.27.1
-tekore==4.2.0
+spotipy==2.22.1
